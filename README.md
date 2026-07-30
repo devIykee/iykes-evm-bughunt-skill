@@ -1,26 +1,53 @@
 # Iyke's Web3 Bughunt Skill
 
-**Status: personal research tool, not accepting external contributions.**
+End-to-end playbook for hunting bugs in **EVM smart contracts and DeFi protocols**, then turning a verified finding into a **responsible, private disclosure**.
 
-End-to-end EVM smart-contract bug-hunting playbook (researcher: **deviykee** / **Iyke**).
-Fill the INTAKE block in `SKILL.md`, then run Steps 1–10: ground-truth the chain, locate
-core contracts, map the surface, triage auth, hunt by product type and bug class, fork-prove
-findings, score severity honestly, write the report, and disclose privately. Mechanical
-probes live in `tools/`; judgment stays in the playbook.
+Fill the INTAKE block in [`SKILL.md`](SKILL.md), run Steps 1–10 in order, and use the scripts in [`tools/`](tools/) for every mechanical probe (RPC checks, contract discovery, surface map, auth triage, PoC scaffold, report/DM skeletons). Judgment calls — severity, root cause, exploit design, disclosure strategy — stay manual.
 
-Skill id: `iykes-web3-bughunt-skill` (formerly `duke-web3-bug-hunting` as a skill name only).
+**Researcher identity for reports and DMs:** [deviykee](https://x.com/deviykee) / **Iyke**.
 
-## Folder structure
+| | |
+|---|---|
+| Skill id | `iykes-web3-bughunt-skill` |
+| License | [MIT](LICENSE) — Copyright (c) 2026 Iyke / deviykee |
+| Chain coverage | [ANALYSIS-chain-coverage.md](ANALYSIS-chain-coverage.md) |
+| Changelog | [CHANGELOG.md](CHANGELOG.md) |
+
+---
+
+## What this is
+
+A **copy-paste operational playbook** plus **CLI tools** so you (or an agent) do not re-derive the same bash every hunt:
+
+1. **Ground truth** — is the chain/RPC real?
+2. **Find core contracts** — creator trace, bundle grep, browser, explorer
+3. **Surface map** — balance, code size, Sourcify, selectors
+4. **Auth triage** — `eth_call` admin paths from an attacker
+5. **Read for product-type attacks** (manual)
+6. **Bug-class playbook** (manual patterns)
+7. **Fork-prove** with Foundry (never mainnet exploit)
+8. **Honest severity**
+9. **Report** (template + optional filler script)
+10. **Private first DM** (template + optional filler script)
+
+**Best fit:** EVM L2s and appchains with a Blockscout-style `/api/v2` explorer and Foundry-compatible RPC. See the [chain coverage analysis](ANALYSIS-chain-coverage.md) for FULLY / PARTIALLY / NOT EFFECTIVE chains and a porting checklist.
+
+This repo is **tooling only**. Do not commit filled INTAKE blocks, live hunt addresses, draft reports/DMs, or `poc/` build artifacts. Keep hunt work in a private workspace.
+
+---
+
+## Repository layout
 
 ```text
 .
-├── SKILL.md           # Playbook: INTAKE, rules, Steps 1–10, templates
-├── LICENSE            # MIT — Copyright (c) 2026 Iyke / deviykee
+├── SKILL.md                      # Playbook: INTAKE, rules, Steps 1–10, templates
+├── ANALYSIS-chain-coverage.md    # Where the skill works and how to port chains
+├── LICENSE
 ├── CHANGELOG.md
-├── README.md          # This file
+├── README.md
 └── tools/
-    ├── README.md      # Per-script usage + exit codes
-    ├── selftest.sh    # Graceful-failure smoke test
+    ├── README.md                 # Per-script usage, examples, exit codes
+    ├── selftest.sh               # Graceful-failure smoke test
     ├── step1_ground_truth.sh
     ├── step2_creator_trace.sh
     ├── step2_bundle_grep.sh
@@ -31,99 +58,130 @@ Skill id: `iykes-web3-bughunt-skill` (formerly `duke-web3-bug-hunting` as a skil
     └── step10_dm_skeleton.py
 ```
 
-This repo is pure tooling. Do not commit filled INTAKE blocks, live hunt addresses,
-draft reports/DMs, or `poc/` artifacts. Keep hunt work elsewhere (e.g. a private workspace).
+---
 
 ## Prerequisites
 
-Install commands (Linux/macOS-style):
-
 ```bash
-# Foundry (provides forge + cast)
+# Foundry (forge + cast)
 curl -L https://foundry.paradigm.xyz | bash
 foundryup
-# ensure on PATH, e.g.:
 export PATH="$HOME/.foundry/bin:$PATH"
 
-# Python 3
+# Python 3 + curl
 # Debian/Ubuntu:
 sudo apt-get update && sudo apt-get install -y python3 curl
-# macOS:
-# brew install python3 curl
+# macOS: brew install python3 curl
 
-# GitHub CLI (optional; Step 10 private disclosure repo only)
-# Debian/Ubuntu: see https://github.com/cli/cli#installation
-# macOS: brew install gh
-# then: gh auth login
-
-# jq is optional and not required by these scripts
+# Optional: GitHub CLI (private disclosure repo in Step 10)
+# https://github.com/cli/cli#installation  then: gh auth login
 ```
 
-### Versions tested in this packaging environment
+**Versions used when packaging/testing tools:**
 
 | Tool | Version |
 |---|---|
 | `forge` | 1.7.1 |
 | `cast` | 1.7.1 |
-| `python3` | 3.13.13 |
-| `gh` | 2.96.0 |
-| `curl` | system |
+| `python3` | 3.13.x |
+| `gh` | 2.x (optional) |
 
 ```bash
-forge --version   # forge Version: 1.7.1
-cast --version    # cast Version: 1.7.1
-```
-
-After clone:
-
-```bash
+git clone https://github.com/devIykee/iykes-web3-bughunt-skill.git
+cd iykes-web3-bughunt-skill
 chmod +x tools/*.sh tools/*.py
 ./tools/selftest.sh
 ```
 
+---
+
 ## Quickstart
 
-1. Open `SKILL.md` and fill **INTAKE** (only fields you know; omit unknowns).
-2. Set shell vars: `RPC=...; CID=...; BS=<EXPLORER>/api/v2`.
-3. Run steps in order:
-   - Step 1: `./tools/step1_ground_truth.sh "$RPC" "$CID"`
-   - Step 2: creator-trace and/or bundle-grep until you have a core address
-   - Step 3: `./tools/step3_surface_map.sh "$RPC" "$CID" "0x..." "$BS"`
-   - Step 4: `./tools/step4_auth_triage.sh "$RPC" "0x..."`
-   - Steps 5–6: read with attack questions + bug-class playbook (manual)
-   - Step 7: `./tools/step7_poc_scaffold.sh "$RPC" "0x..." poc` then fill and fork-test
-   - Step 8: honest severity (manual)
-   - Step 9: `python3 ./tools/step9_report_skeleton.py ... -o reports/...`
-   - Step 10: `python3 ./tools/step10_dm_skeleton.py ... -o reports/dm-...` then private DM
-4. Follow operating rules in `SKILL.md` on every hunt.
+1. Open [`SKILL.md`](SKILL.md) and fill **INTAKE** (only fields you know; omit unknowns).
+2. Export shell vars:
 
-## Tools
+   ```bash
+   RPC="<RPC_URL>"
+   CID="<CHAIN_ID>"
+   BS="<EXPLORER_BASE>/api/v2"   # Blockscout-style API base
+   ```
 
-| Script | Step | Inputs | Outputs / gates | Why this exists |
+3. Run steps in order (details and gates live in `SKILL.md`):
+
+   | Step | Command / action |
+   |---|---|
+   | 1 | `./tools/step1_ground_truth.sh "$RPC" "$CID"` |
+   | 2 | `./tools/step2_creator_trace.sh "$BS" "0x<token>"` and/or `./tools/step2_bundle_grep.sh "<WEBSITE>"` |
+   | 3 | `./tools/step3_surface_map.sh "$RPC" "$CID" "0x<core>" "$BS"` |
+   | 4 | `./tools/step4_auth_triage.sh "$RPC" "0x<core>"` |
+   | 5–6 | Manual: attack questions + bug-class playbook in `SKILL.md` |
+   | 7 | `./tools/step7_poc_scaffold.sh "$RPC" "0x<core>" poc` → fill test → `forge test --fork-url …` |
+   | 8 | Manual: honest severity rubric |
+   | 9 | `python3 ./tools/step9_report_skeleton.py … -o reports/…` then complete judgment sections |
+   | 10 | `python3 ./tools/step10_dm_skeleton.py … -o reports/dm-…` then private DM only |
+
+4. Obey the **operating rules** in `SKILL.md` on every hunt (fork-only verification, honest severity, no threats, private until patched).
+
+Full CLI usage, examples, and exit codes: [`tools/README.md`](tools/README.md).
+
+---
+
+## Tools overview
+
+| Script | Step | Inputs | Outputs / gates | Why it exists |
 |---|---|---|---|---|
-| `step1_ground_truth.sh` | 1 | RPC, chain id | PASS/STOP on chain | Avoid hours on dead/scam RPCs |
-| `step2_creator_trace.sh` | 2A | explorer API, token | creator address | Reliable factory/core discovery |
-| `step2_bundle_grep.sh` | 2B | website URL | role-labeled 0x hits | Find hidden frontend config addrs |
+| `step1_ground_truth.sh` | 1 | RPC, chain id | PASS/STOP | Avoid hours on dead/scam RPCs |
+| `step2_creator_trace.sh` | 2A | explorer API, token | creator address | Factory/core discovery |
+| `step2_bundle_grep.sh` | 2B | website URL | role-labeled `0x` hits | Hidden frontend config |
 | `step3_surface_map.sh` | 3 | RPC, chain, contract, [API] | balance, Sourcify, selectors | Verified vs unverified path |
-| `step4_auth_triage.sh` | 4 | RPC, contract, [sigs] | guarded / OPEN | Free-win missing-auth check |
-| `step7_poc_scaffold.sh` | 7 | RPC, target, [dir] | Foundry PoC + forge cmd | Repeatable fork-only proof setup |
+| `step4_auth_triage.sh` | 4 | RPC, contract, [sigs] | guarded / OPEN | Missing-auth free wins |
+| `step7_poc_scaffold.sh` | 7 | RPC, target, [dir] | Foundry PoC + forge cmd | Repeatable fork-only proof |
 | `step9_report_skeleton.py` | 9 | INTAKE + severity fields | report markdown | Same report shape every hunt |
 | `step10_dm_skeleton.py` | 10 | project/severity/impact | first DM text | Consistent private first contact |
 | `selftest.sh` | — | none | pass/fail smoke | Catch broken tools before a hunt |
 
-Full usage strings, examples, and exit codes: [`tools/README.md`](tools/README.md).
+---
 
 ## Responsible disclosure
 
-From the playbook operating rules (substance unchanged):
+Non-negotiable rules (full text in `SKILL.md`):
 
 1. **Fork / `eth_call` verification only. Never move real funds on mainnet.**
 2. **Honest severity.** State the bound. A Medium is a Medium.
 3. **Ask, never threaten.** No "pay or I release/exploit".
-4. **Kill your own finding if it doesn't hold up.**
+4. **Kill your own finding if it does not hold up.**
 5. **Never publish a live, unpatched bug.** Private channel + private repo until fixed.
 
-Researcher identity for reports: **deviykee**. First DM voice: **Iyke** (http://x.com/deviykee).
+Sign reports as **deviykee**. First DM voice: **Iyke** (https://x.com/deviykee).
+
+---
+
+## Contributing
+
+Contributions are welcome via **pull request** against `main`.
+
+### Welcome
+
+- **New chain support** following the porting checklist in [`ANALYSIS-chain-coverage.md`](ANALYSIS-chain-coverage.md) (e.g. Etherscan-family explorer adapters, Sourcify gaps, docs for FULLY/PARTIAL chains).
+- **New `tools/` scripts** for other *mechanical, repeatable* steps (same bar: CLI args, usage message, fail loudly on RPC/HTTP errors, header comment, `selftest.sh` coverage).
+- **Step 6 bug-class additions** that are pattern + detect + fix (concrete, not vague advice).
+- Bug fixes, clearer docs, and tests for existing scripts.
+
+### Not welcome (will be closed)
+
+- Changes to the **operating rules**, **severity rubric**, or **disclosure process** — those are deliberate and researcher-specific.
+- Replacing researcher identity (**deviykee** / **Iyke**) or weakening fork-only / no-threat rules.
+- Committing hunt artifacts (real addresses, filled INTAKE, draft reports, `poc/` outputs, `.env`).
+
+### How to propose a change
+
+1. Fork the repo and branch from `main`.
+2. Keep PRs focused (one concern per PR when possible).
+3. Run `./tools/selftest.sh` if you touch `tools/`.
+4. Open a PR with a short description of *what* and *why*.
+5. For new chains, note explorer type (Blockscout vs Etherscan-family), chain id, and what you tested.
+
+---
 
 ## License
 

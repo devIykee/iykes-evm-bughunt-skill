@@ -311,7 +311,7 @@ Write the number you can defend, with the bound stated. Do not round up.
 
 ## STEP 9 - Report (fill-in template)
 
-Always use researcher name **deviykee** (never dukedotsol or other handles).
+Always use researcher name **deviykee** (do not sign with other handles).
 Open every report with a plain-language "What this means" section so a non-technical
 reader understands the danger before any code. Do not use em dashes (the long dash
 character); use commas, periods, or a normal hyphen instead.
