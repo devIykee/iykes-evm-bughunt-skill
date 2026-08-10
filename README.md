@@ -23,14 +23,18 @@ A **copy-paste operational playbook** plus **CLI tools** so you (or an agent) do
 2. **Find core contracts** — creator trace, bundle grep, browser, explorer
 3. **Surface map** — balance, code size, Sourcify, selectors
 4. **Auth triage** — `eth_call` admin paths from an attacker
-5. **Read for product-type attacks** (manual)
-6. **Bug-class playbook** (manual patterns)
-7. **Fork-prove** with Foundry (never mainnet exploit)
-8. **Honest severity**
-9. **Report** (template + optional filler script)
+5. **Foundation map** — state who-writes, call order, token paths, AC, checklist
+5.5 **Multi-angle adversarial pass** — drain/freeze/owner, economic, reentrancy, edges, externals (chunked)
+5.6 **Dual-ledger vault hunt** — principal vs NAV vs cash (multi-strategy)
+6. **Product-type attack questions + bug-class playbook** (manual patterns)
+7. **Fork-prove** with Foundry (never mainnet exploit); kill temporary-vs-persistent
+8. **Honest severity** + second-opinion gate
+9. **Report** (template + master findings table + optional filler script)
 10. **Private first DM** (template + optional filler script)
 
-**Best fit:** EVM L2s and appchains with a Blockscout-style `/api/v2` explorer and Foundry-compatible RPC. See the [chain coverage analysis](ANALYSIS-chain-coverage.md) for FULLY / PARTIALLY / NOT EFFECTIVE chains and a porting checklist.
+**Best fit:** EVM L2s and appchains with a Blockscout-style `/api/v2` explorer and Foundry-compatible RPC. Also strong for **source/pre-deploy** repo hunts (multi-strategy ERC-4626 vaults, agent allocators, adapters) with local unit PoCs. See the [chain coverage analysis](ANALYSIS-chain-coverage.md) for FULLY / PARTIALLY / NOT EFFECTIVE chains and a porting checklist.
+
+Optional companions (if installed): [forefy/.context](https://github.com/forefy/.context) skills `smart-contract-audit`, `tiny-auditor`, `foundry-poc`. This playbook remains the lead for intake, gates, severity honesty, and private disclosure.
 
 This repo is **tooling only**. Do not commit filled INTAKE blocks, live hunt addresses, draft reports/DMs, or `poc/` build artifacts. Keep hunt work in a private workspace.
 

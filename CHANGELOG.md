@@ -1,5 +1,36 @@
 # Changelog
 
+## [v0.2.0] - 2026-08-10
+
+### Added
+
+- **Step 5 foundation map** before deep findings: state who-writes, external call
+  order, token paths, access gates, structured PASS/FAIL first-pass checklist.
+- **Step 5.5 multi-angle adversarial pass** for complex logic: malicious drain/freeze,
+  economic/math, state/AC/reentrancy, edges, external integrations. Chunked prompts
+  (one mechanism at a time).
+- **Step 5.6 dual-ledger / multi-strategy vault hunt**: principal book vs NAV vs cash
+  returned; forced questions (gross vs supplied, unrealizable NAV, phantom zero
+  withdraw, maxWithdraw lie, view/pull asymmetry, epoch coupling, lastPass over-pull).
+- **PRODUCT_TYPE** `multi-strategy-vault` and expanded vault attack questions.
+- **Bug classes 8–12**: unrealizable NAV preferential exit; gross book vs supplied;
+  phantom zero-return withdraw; view/pull asymmetry; compromised-agent churn without
+  external send.
+- **Severity second-opinion gate** (gas, AC, reachability, mitigations, temporary vs
+  persistent). Temporary restore sandwich must be killed before claiming bank-run theft.
+- **Optional companion skills** (forefy/.context): smart-contract-audit, tiny-auditor,
+  foundry-poc. This playbook remains lead for intake/disclosure.
+- **Slither triage rule**: no Critical from static High without a working PoC.
+- **PoC quality bar** and Appendix B adversarial prompt pack; Appendix C hunt hygiene.
+- Token-budget rule: chunk analysis, do not full-repo dump.
+
+### Changed
+
+- Operating rules: honest bounds, trust-root vs permissionless, temporary vs persistent.
+- Step 3: source-only / pre-deploy repo audits allowed with local unit PoCs.
+- Step 9: master findings table + multi-finding private pack guidance.
+- Description frontmatter updated for new steps and dual-ledger focus.
+
 ## [v0.1.0] - 2026-07-30
 
 ### Added
