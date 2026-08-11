@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.2.1] - 2026-08-10
+
+### Added
+
+- **Coverage tracking (mandatory):** maintain `coverage.md` during every hunt/audit
+  with files opened, code paths traced (not just files touched), coverage %
+  (X/Y files), and explicitly excluded areas with one-line reasons.
+- Running table format plus top summary line `Coverage: X/Y files (Z%)`.
+- Incremental update rule (as files are read, not only at the end).
+- Low-coverage honesty gate before final report / user summary.
+- Operating rule 10 and token-budget rule 9; Step 3 inventory sets Y; Step 9 and
+  multi-finding packs include coverage.md.
+
 ## [v0.2.0] - 2026-08-10
 
 ### Added

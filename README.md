@@ -21,7 +21,7 @@ A **copy-paste operational playbook** plus **CLI tools** so you (or an agent) do
 
 1. **Ground truth** — is the chain/RPC real?
 2. **Find core contracts** — creator trace, bundle grep, browser, explorer
-3. **Surface map** — balance, code size, Sourcify, selectors
+3. **Surface map** — balance, code size, Sourcify, selectors (+ set coverage denominator Y)
 4. **Auth triage** — `eth_call` admin paths from an attacker
 5. **Foundation map** — state who-writes, call order, token paths, AC, checklist
 5.5 **Multi-angle adversarial pass** — drain/freeze/owner, economic, reentrancy, edges, externals (chunked)
@@ -29,8 +29,10 @@ A **copy-paste operational playbook** plus **CLI tools** so you (or an agent) do
 6. **Product-type attack questions + bug-class playbook** (manual patterns)
 7. **Fork-prove** with Foundry (never mainnet exploit); kill temporary-vs-persistent
 8. **Honest severity** + second-opinion gate
-9. **Report** (template + master findings table + optional filler script)
+9. **Report** (template + master findings table + **coverage.md** honesty + optional filler script)
 10. **Private first DM** (template + optional filler script)
+
+**Coverage:** every hunt maintains `coverage.md` (files opened, paths traced, X/Y %, exclusions), updated as work proceeds—not only at the end.
 
 **Best fit:** EVM L2s and appchains with a Blockscout-style `/api/v2` explorer and Foundry-compatible RPC. Also strong for **source/pre-deploy** repo hunts (multi-strategy ERC-4626 vaults, agent allocators, adapters) with local unit PoCs. See the [chain coverage analysis](ANALYSIS-chain-coverage.md) for FULLY / PARTIALLY / NOT EFFECTIVE chains and a porting checklist.
 

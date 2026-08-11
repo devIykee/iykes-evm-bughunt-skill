@@ -9,7 +9,9 @@ description: >-
   fork / eth_call ONLY. Never exploit mainnet. Be token-conservative; use smaller
   models for capable subtasks. After surface map, run foundation maps, multi-angle
   adversarial passes, dual-ledger / complex-logic hunts, and honest severity
-  (including kill temporary-vs-persistent conditions).
+  (including kill temporary-vs-persistent conditions). Maintain coverage.md
+  incrementally (files opened, paths traced, %, exclusions); never imply a
+  complete audit when coverage is low.
   Use when the user names a target (project, handle, or website) and wants it
   audited for bounties, or says "hunt", "audit this", "find bugs".
 ---
@@ -81,6 +83,8 @@ Rules:
 8. **Chunk, do not dump.** For complex logic, feed one mechanism at a time
    (redeem path, allocate/budget path, one adapter) with a single adversarial
    question. Full-repo paste increases hallucination and misses interactions.
+9. **Coverage tracking is mandatory.** Update `coverage.md` as you read files and
+   trace paths (see **Coverage tracking** below). Do not invent thoroughness.
 
 ---
 
@@ -136,6 +140,109 @@ RPC="<RPC>"; CID="<CHAIN_ID>"; BS="<EXPLORER>/api/v2"
 9. **Temporary condition != permanent condition.** One-block price manip that is
    restored often leaves victims whole. Persistent stuck/depeg while NAV still
    marks face value is a different finding. Kill the first before claiming the second.
+10. **Coverage tracking.** Maintain `coverage.md` for the whole hunt. Update it
+    **when you open a file or finish tracing a path**, not only at the end. Opening
+    a file without tracing its value-moving logic does not count as path coverage.
+    If coverage is low, say so explicitly in the report and user status; never
+    imply a complete audit was performed.
+
+---
+
+## Coverage tracking (mandatory every hunt)
+
+During any bug-hunting or security-audit session, maintain a **`coverage.md`**
+file that tracks what was actually examined.
+
+### Where to put it
+
+Prefer one of (first match wins for the session):
+
+1. Hunt workspace root: e.g. `hunts/<project>/coverage.md`
+2. Audit output dir: e.g. `.context/outputs/<N>/coverage.md` or `hunts/<project>/audit/coverage.md`
+3. Repo root of the target under audit (only if that repo is a private hunt workspace)
+
+Do **not** leave coverage only in chat. It must be a file on disk.
+
+### What to track
+
+1. **Files opened** — every source file read during the audit, with path (relative
+   to the target repo when possible).
+2. **Code paths followed** — not just files touched, but which functions/flows were
+   actually traced (e.g. `deposit → _withdraw → _ensureIdle → retreatSelf →
+   adapter.withdraw → Uni swap` across `AumoPool.sol` + `RwaUsdgAdapter.sol`).
+   A file can be opened without its logic being understood; say so in Notes if
+   only skimming.
+3. **Coverage percentage** — `files read / total relevant files` in scope, updated
+   as the audit progresses. Define the denominator early (e.g. all `src/**/*.sol`
+   excluding `lib/`, or all app modules excluding tests).
+4. **Explicitly excluded areas** — files/modules deliberately skipped, with a
+   one-line reason (e.g. `excluded: test fixtures`, `excluded: generated types`,
+   `excluded: vendor OZ under lib/`).
+
+### Format (running table)
+
+Keep a **summary line at the top**, then the table, then exclusions.
+
+```markdown
+# Coverage — <PROJECT>
+
+Coverage: X/Y files (Z%).
+
+Last updated: <ISO date or step name>
+
+| File | Read? | Paths traced | Notes |
+|------|-------|--------------|-------|
+| src/Foo.sol | yes | `bar()` → `baz()` value path | full read |
+| src/Bar.sol | partial | skim only | not traced |
+
+## Explicitly excluded
+
+| Path / area | Reason |
+|-------------|--------|
+| lib/** | vendored dependencies |
+| test/** | fixtures / unit tests (unless hunting test-only bugs) |
+```
+
+### Update rules
+
+- **Incremental, not retroactive.** When you `read` a file or finish tracing a flow,
+  update the row the same turn (or immediately after the batch of reads).
+- **Read? values:** `yes` | `partial` | `no` (no only for planned-but-not-yet).
+- **Paths traced** empty or `—` means file opened but logic not followed; that does
+  **not** inflate the “understood” claim. For Z%, count a file as covered only if
+  `Read?` is `yes` or `partial` with at least one real path traced; optional:
+  report both “opened %” and “traced %” if partials dominate.
+- **Denominator Y:** set after inventory (Step 3 / source tree). If Y changes
+  (new modules found), update Y and Z.
+- **Low coverage gate:** before Step 9 / final user summary, if Z < 50% of
+  in-scope production code (or fewer than the core value-moving files), state
+  explicitly: `Coverage incomplete: Z% (X/Y). Findings apply to examined paths
+  only.` Do not use language that implies a full audit.
+- **Token budget:** coverage.md is short tables; do not dump file contents into it.
+
+### Template bootstrap (create at hunt start)
+
+```bash
+# after INTAKE, once PROJECT_NAME and hunt dir are known
+# HUNT_DIR=hunts/<project>   # or audit output dir
+cat > "$HUNT_DIR/coverage.md" <<'EOF'
+# Coverage — <PROJECT_NAME>
+
+Coverage: 0/Y files (0%).  # set Y after inventory
+
+Last updated: intake
+
+| File | Read? | Paths traced | Notes |
+|------|-------|--------------|-------|
+
+## Explicitly excluded
+
+| Path / area | Reason |
+|-------------|--------|
+| lib/** or node_modules/** | vendored |
+| test/** or **/*_test* | tests (exclude unless in scope) |
+EOF
+```
 
 ---
 
@@ -215,6 +322,9 @@ Gate:
 - **Unverified** → use the script's selector map (bytecode + tx history) and continue.
 - **Source-only / pre-deploy** (repo audit, no mainnet address yet) → treat repo as
   scope; still run local unit PoCs; note pre-launch in the report Status line.
+
+After inventory: set **Y** (total relevant production files) in `coverage.md` and list
+exclusions. Update coverage as each source file is read.
 
 ---
 
@@ -499,6 +609,11 @@ Keep a **master findings table** for the hunt (ID, severity, status, component)
 and update it when findings are killed or reclassified. Single-issue disclosure
 files still use the template below.
 
+**Coverage honesty in the report:** cite `coverage.md` summary (`Coverage: X/Y
+(Z%)`). If Z is low or core modules were only partially traced, state that the
+review is path-scoped, not a full audit. Attach or link `coverage.md` in private
+multi-finding packs.
+
 Scaffold the file from INTAKE + your Step 8 call (judgment fields you still fill by hand):
 ```bash
 python3 ./tools/step9_report_skeleton.py \
@@ -562,6 +677,7 @@ For multi-finding private packs, also ship:
 - hunt notes (INTAKE, killed paths, PoC commands)
 - structured checklist PASS/FAIL
 - adversarial angle scoreboard (path attempted → result)
+- **coverage.md** (files opened, paths traced, %, exclusions)
 
 ---
 
@@ -667,10 +783,12 @@ Use after Step 5 foundation map. One chunk + one angle per invocation.
 - Master findings table stays updated when severity changes.
 - Killed Critical candidates listed in hunt notes (prevents re-opening bad claims).
 - Prefer local exact-logic unit tests for accounting bugs; use fork for live magnitude.
+- **coverage.md** updated incrementally; low Z% stated openly; exclusions listed with reasons.
 
 **Reminder:** fork only, honest severity, ask don't threaten, kill your own bad
 findings, private until patched, stay token-conservative and route mechanical
 work to smaller models. Map first, multi-angle second, dual-ledger on vaults,
-PoC before Critical. That discipline is the job.
+PoC before Critical, **track coverage so thoroughness is real**. That discipline
+is the job.
 
 deviykee
