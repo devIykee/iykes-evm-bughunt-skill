@@ -97,9 +97,11 @@ field out over guessing.
 
 ```
 PROJECT_NAME   : <e.g. hood.fun>
-X_HANDLE       : <e.g. @hooddotfun>          # only if known; used for private disclosure channel
+X_HANDLE       : <e.g. @hooddotfun>          # only if verified official; private disclosure
 WEBSITE        : <https://...>               # app URL (where tokens/positions render)
 DOCS           : <https://docs...>           # only if known
+SECURITY_EMAIL : <security@... or omit>      # fill in Step 10A from a quoted official page
+DISCLOSURE     : <immunefi URL / "discretionary" / omit>
 CHAIN          : <e.g. Robinhood Chain>
 RPC            : <https://...>               # confirm in Step 1
 CHAIN_ID       : <e.g. 4663>
@@ -261,6 +263,7 @@ instead of hanging. Smoke-check: `./tools/selftest.sh`.
 | `tools/step4_auth_triage.sh` | 4 | `<RPC> <CONTRACT> [extra_sig ...]` | per-sig `guarded` / `OPEN <-- CHECK` | Free-win missing-auth check |
 | `tools/step7_poc_scaffold.sh` | 7 | `<RPC> <TARGET> [POC_DIR]` | Foundry PoC skeleton + fork `forge test` cmd | Repeatable fork-only proof setup |
 | `tools/step9_report_skeleton.py` | 9 | INTAKE + severity + title (+ optional) | filled Step 9 report skeleton | Same report shape every hunt |
+| `tools/step10_contact_hunt.sh` | 10A | one or more official URLs | emails, Immunefi links, nearby quotes | Prove the real security inbox from docs |
 | `tools/step10_dm_skeleton.py` | 10 | project/severity/chain/component/impact | filled first DM text | Consistent private first contact |
 | `tools/selftest.sh` | — | none | usage/exit smoke for all tools | Catch broken tools before a hunt |
 
@@ -678,6 +681,7 @@ For multi-finding private packs, also ship:
 - structured checklist PASS/FAIL
 - adversarial angle scoreboard (path attempted → result)
 - **coverage.md** (files opened, paths traced, %, exclusions)
+- **reports/contacts.md** (official inbox + source URL + quote)
 
 ---
 
@@ -686,8 +690,46 @@ For multi-finding private packs, also ship:
 Run this **after** the report file exists. Write the first DM as a separate file
 (e.g. `reports/dm-<project>.md`). Do not put full exploit steps in the first DM.
 
-1. **Find the private channel** from X_HANDLE (verified account / security email).
-   Never a public thread while it's live.
+### 10A. Official contacts (mandatory every hunt)
+
+Do not guess `security@` or DM the first @handle Google returns. Build a
+`reports/contacts.md` with **URL + exact quote** for every inbox you will use.
+An email without a cited official page is not a contact.
+
+Hunt in this order until you have a **bug-report** inbox (security@ / Immunefi /
+HackerOne beats a generic contact@):
+
+1. Official docs FAQ / "security" / "bug bounty" / "contact" pages
+   (`docs.*`, `help.*`, GitHub `docs/`, GitBook `.md` URLs).
+2. `SECURITY.md`, `security.txt` (`/.well-known/security.txt`), Immunefi /
+   HackerOne / Cantina / Code4rena program page for this project (not a
+   lookalike).
+3. Official forum / governance post **by a founder or staff account** that
+   names a report address. Prefer `.json` API if the HTML hides emails
+   behind Cloudflare (`data-cfemail`).
+4. Official GitHub org **People** + matching verified X bios. Founders are
+   backup DMs, not the first inbox.
+
+Then verify socials:
+
+- Official X: verified org/account whose bio links the **same** website as
+  INTAKE. Reject lookalikes (one-letter typos, extra `l`/`o`, copied logo).
+- Discord / Telegram: only the invite printed on official docs. FAQ "we have
+  no Telegram" means any TG group is a scam.
+- Never describe a live bug in a public forum, Discord, tweet, or GitHub issue.
+
+```bash
+./tools/step10_contact_hunt.sh "<DOCS_FAQ_URL>" "<WEBSITE>" "<FORUM_OR_SECURITY_MD>"
+# write reports/contacts.md from the hits: Role | Address | Source URL | Quote
+```
+
+Show the user the **links and quotes** before sending. Prefer `security@` (or
+the bounty platform) for the report; `contact@` is general and may be CC only.
+
+Gate: no cited official inbox and no verified org X -> **do not send**. Tell
+the user what you searched and what is missing.
+
+1. **Use the inbox from 10A.** Never a public thread while it's live.
 2. **First message (short):** use the template below. Who you are, plain impact,
    severity + bound, verified how, nothing touched, offer full report + PoC privately.
 3. **Share via a PRIVATE repo** (add them as collaborator) or attach files. Never
@@ -784,6 +826,7 @@ Use after Step 5 foundation map. One chunk + one angle per invocation.
 - Killed Critical candidates listed in hunt notes (prevents re-opening bad claims).
 - Prefer local exact-logic unit tests for accounting bugs; use fork for live magnitude.
 - **coverage.md** updated incrementally; low Z% stated openly; exclusions listed with reasons.
+- **reports/contacts.md** before any DM: official inbox, source URL, exact quote.
 
 **Reminder:** fork only, honest severity, ask don't threaten, kill your own bad
 findings, private until patched, stay token-conservative and route mechanical

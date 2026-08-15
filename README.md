@@ -124,6 +124,7 @@ chmod +x tools/*.sh tools/*.py
    | 7 | `./tools/step7_poc_scaffold.sh "$RPC" "0x<core>" poc` → fill test → `forge test --fork-url …` |
    | 8 | Manual: honest severity rubric |
    | 9 | `python3 ./tools/step9_report_skeleton.py … -o reports/…` then complete judgment sections |
+   | 10A | `./tools/step10_contact_hunt.sh <docs-url> [url…]` then `reports/contacts.md` (URL + quote) |
    | 10 | `python3 ./tools/step10_dm_skeleton.py … -o reports/dm-…` then private DM only |
 
 4. Obey the **operating rules** in `SKILL.md` on every hunt (fork-only verification, honest severity, no threats, private until patched).
@@ -143,6 +144,7 @@ Full CLI usage, examples, and exit codes: [`tools/README.md`](tools/README.md).
 | `step4_auth_triage.sh` | 4 | RPC, contract, [sigs] | guarded / OPEN | Missing-auth free wins |
 | `step7_poc_scaffold.sh` | 7 | RPC, target, [dir] | Foundry PoC + forge cmd | Repeatable fork-only proof |
 | `step9_report_skeleton.py` | 9 | INTAKE + severity fields | report markdown | Same report shape every hunt |
+| `step10_contact_hunt.sh` | 10A | official URLs | emails + quotes | Prove the real security inbox |
 | `step10_dm_skeleton.py` | 10 | project/severity/impact | first DM text | Consistent private first contact |
 | `selftest.sh` | — | none | pass/fail smoke | Catch broken tools before a hunt |
 

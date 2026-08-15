@@ -70,7 +70,8 @@ for s in \
   step2_bundle_grep.sh \
   step3_surface_map.sh \
   step4_auth_triage.sh \
-  step7_poc_scaffold.sh
+  step7_poc_scaffold.sh \
+  step10_contact_hunt.sh
 do
   run_check "$s (no args)" "./$s"
   run_check "$s (--help)" "./$s" --help

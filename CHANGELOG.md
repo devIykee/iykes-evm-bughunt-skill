@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.2.2] - 2026-08-15
+
+### Added
+
+- **Step 10A official contacts (mandatory):** before any DM, hunt the real
+  security inbox from official docs / SECURITY.md / staff forum posts / verified
+  org X. Write `reports/contacts.md` with URL + exact quote. Do not guess
+  `security@` or DM lookalike handles.
+- `tools/step10_contact_hunt.sh` fetches pages, extracts emails, bounty-platform
+  links, nearby quotes, and decodes Cloudflare `data-cfemail`.
+- INTAKE fields `SECURITY_EMAIL` and `DISCLOSURE` (fill from 10A or omit).
+
 ## [v0.2.1] - 2026-08-10
 
 ### Added

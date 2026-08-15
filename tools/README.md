@@ -168,6 +168,27 @@ python3 ./tools/step9_report_skeleton.py \
 
 ---
 
+### `step10_contact_hunt.sh` — Step 10A
+
+**Purpose:** Fetch official docs/forum URLs and extract candidate security emails,
+bounty-platform links, nearby quote lines, and Cloudflare-decoded `data-cfemail`.
+
+**Usage:** `step10_contact_hunt.sh <URL> [URL ...]`
+
+**Example:**
+```bash
+./tools/step10_contact_hunt.sh \
+  "https://raw.githubusercontent.com/example/docs/master/faq.md" \
+  "https://forum.example.com/t/bug-bounty/1.json"
+```
+
+**Prints:** per-URL emails, quotes, GATE line. Agent still writes
+`reports/contacts.md` with URL + exact quote.
+
+**Exit:** `0` at least one fetch ok · `1` all fetches failed · `2` usage
+
+---
+
 ### `step10_dm_skeleton.py` — Step 10
 
 **Purpose:** Fill first private DM text (voice: Iyke / deviykee). No strategy judgment.
@@ -215,6 +236,7 @@ python3 ./tools/step10_dm_skeleton.py \
 | `step4_auth_triage.sh` | 4 | RPC, contract, [sigs] | guarded / OPEN | Free-win missing-auth check |
 | `step7_poc_scaffold.sh` | 7 | RPC, target, [dir] | Foundry PoC + forge cmd | Repeatable fork-only proof setup |
 | `step9_report_skeleton.py` | 9 | INTAKE + severity fields | report markdown | Same report shape every hunt |
+| `step10_contact_hunt.sh` | 10A | official URLs | emails + quotes | Prove the real security inbox |
 | `step10_dm_skeleton.py` | 10 | project/severity/impact | first DM text | Consistent private first contact |
 | `selftest.sh` | — | none | pass/fail per script | CI-style smoke for tools |
 
