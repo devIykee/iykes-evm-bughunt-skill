@@ -322,12 +322,206 @@ maps PUSH4 selectors and top tx-history selectors.
 
 Gate:
 - **Verified** → pull the source files from `src.json` and read them (30-min path).
-- **Unverified** → use the script's selector map (bytecode + tx history) and continue.
+- **Unverified** → use the script's selector map (bytecode + tx history) and continue to Step 3.5.
 - **Source-only / pre-deploy** (repo audit, no mainnet address yet) → treat repo as
   scope; still run local unit PoCs; note pre-launch in the report Status line.
 
 After inventory: set **Y** (total relevant production files) in `coverage.md` and list
 exclusions. Update coverage as each source file is read.
+
+---
+
+## STEP 3.5 - Bytecode analysis for unverified contracts (when Step 3 finds no source)
+
+When contracts are unverified and Sourcify returns no match, use bytecode analysis
+tools to extract function signatures, identify external calls, and search for critical
+patterns. This does NOT replace source code review but allows hypothesis-driven
+investigation.
+
+### Tools to install/use (in order of preference)
+
+1. **cast disassemble** (already available with Foundry)
+   - Built-in, no installation needed
+   - Basic disassembly and selector extraction
+   
+2. **Foundry fork tests** (already available)
+   - Test actual behavior on mainnet fork
+   - Verify assumptions about contract logic
+   
+3. **Online decompilers** (when available)
+   - Dedaub (https://library.dedaub.com/decompile)
+   - Panoramix/Ethervm (if accessible)
+   - Request source from team via official channels
+
+### Bytecode analysis script
+
+Use or adapt this script (save as `tools/analyze-bytecode.sh`):
+
+```bash
+#!/bin/bash
+# Bytecode Analysis Script for Unverified Contracts
+CONTRACT=$1
+RPC=$2
+OUTPUT_DIR=${3:-"bytecode-analysis"}
+
+mkdir -p "$OUTPUT_DIR"
+
+echo "=== Analyzing contract $CONTRACT ==="
+
+# 1. Get bytecode
+cast code "$CONTRACT" --rpc-url "$RPC" > "$OUTPUT_DIR/bytecode.bin"
+
+# 2. Disassemble
+cast disassemble $(cat "$OUTPUT_DIR/bytecode.bin") > "$OUTPUT_DIR/disasm.txt" 2>&1
+
+# 3. Extract function selectors
+grep -E "PUSH4 0x[0-9a-f]{8}" "$OUTPUT_DIR/disasm.txt" | \
+  sed -E 's/.*PUSH4 (0x[0-9a-f]{8}).*/\1/' | \
+  sort -u > "$OUTPUT_DIR/selectors.txt"
+
+# 4. Decode known selectors
+while read selector; do
+    sig=$(cast 4byte-decode "$selector" 2>/dev/null | head -1)
+    if [ -n "$sig" ]; then
+        echo "$selector $sig"
+    else
+        echo "$selector UNKNOWN"
+    fi
+done < "$OUTPUT_DIR/selectors.txt" > "$OUTPUT_DIR/functions.txt"
+
+# 5. Search for critical patterns
+{
+    echo "=== CREATE/CREATE2 (contract deployment) ==="
+    grep -nE "^[0-9a-f]+: (CREATE|CREATE2)$" "$OUTPUT_DIR/disasm.txt"
+    echo ""
+    echo "=== External CALL instructions ==="
+    grep -nE "^[0-9a-f]+: (CALL|STATICCALL|DELEGATECALL)$" "$OUTPUT_DIR/disasm.txt" | head -20
+    echo ""
+    echo "=== Storage Writes ==="
+    grep -cE "^[0-9a-f]+: SSTORE$" "$OUTPUT_DIR/disasm.txt"
+} > "$OUTPUT_DIR/patterns.txt"
+
+echo "✓ Analysis complete! Results in $OUTPUT_DIR/"
+```
+
+### What to extract from bytecode
+
+1. **Function selectors** - PUSH4 opcodes near function dispatcher
+2. **External calls** - CALL/STATICCALL/DELEGATECALL opcodes
+3. **Contract creation** - CREATE/CREATE2 opcodes
+4. **Storage writes** - SSTORE opcodes (track state changes)
+5. **Critical patterns** - Known vulnerability signatures
+
+### Analysis workflow for unverified contracts
+
+```bash
+# 1. Run bytecode analysis
+./tools/analyze-bytecode.sh "$CONTRACT" "$RPC" hunt-dir/bytecode-analysis
+
+# 2. Review function list
+cat hunt-dir/bytecode-analysis/functions.txt
+# Look for: admin functions, token creation, pool initialization, critical transfers
+
+# 3. Check patterns
+cat hunt-dir/bytecode-analysis/patterns.txt
+# Look for: CREATE2 (token deployment), CALL instructions (external interactions)
+
+# 4. Search disassembly for specific patterns
+# Example: Uniswap v3 createPool selector 0xa1671295
+grep -i "a1671295" hunt-dir/bytecode-analysis/disasm.txt
+
+# 5. Get context around critical operations
+# Example: context around CREATE2
+grep -B 30 -A 30 "CREATE2$" hunt-dir/bytecode-analysis/disasm.txt
+
+# 6. Create Foundry fork tests to verify behavior
+# Test actual on-chain behavior instead of guessing from bytecode
+```
+
+### Foundry fork testing for verification
+
+When bytecode analysis isn't enough, write fork tests to verify behavior:
+
+```solidity
+// test/BytecodeVerification.t.sol
+pragma solidity ^0.8.0;
+import {Test} from "forge-std/Test.sol";
+
+interface ITarget {
+    function unknownFunction0x19e4e914(...) external;
+}
+
+contract BytecodeVerificationTest is Test {
+    function setUp() public {
+        vm.createSelectFork(RPC_URL);
+    }
+    
+    function test_VerifyPoolCreationBehavior() public {
+        // Call the contract and observe behavior
+        // Check return values, emitted events, state changes
+    }
+}
+```
+
+### Coverage tracking for bytecode analysis
+
+Update `coverage.md` to reflect bytecode-only analysis:
+
+```markdown
+Coverage: 0/4 contracts (0% source code access).
+
+**Contracts analyzed via bytecode:**
+| Contract | Address | Functions | Analysis Method | Confidence |
+|----------|---------|-----------|-----------------|------------|
+| Launchpad V6 | 0x66...c16 | 85 selectors | Disassembly + fork tests | Medium |
+| Hook V6 | 0x143...a88 | Unknown | Selector extraction only | Low |
+
+**Analysis performed:**
+- ✅ Function selector extraction
+- ✅ External call identification  
+- ✅ CREATE2 deployment found
+- ✅ Fork testing (3 passing tests)
+- ❌ Source code logic verification
+
+**Confidence level:** MEDIUM (bytecode + fork testing without source)
+```
+
+### Reporting unverified findings
+
+When reporting vulnerabilities found via bytecode analysis:
+
+1. **State the limitation clearly:**
+   ```
+   Status: ⚠️ UNVERIFIED (contracts not verified on explorer)
+   Evidence: HIGH (documentation + bytecode analysis + known pattern)
+   Confidence: 60% (cannot confirm internal logic without source code)
+   ```
+
+2. **Document what you verified:**
+   - ✅ External call patterns
+   - ✅ Function signatures extracted
+   - ✅ Fork test behavior
+   - ❌ Internal logic flow
+
+3. **Request source code in disclosure:**
+   ```
+   I identified a potential CRITICAL vulnerability via bytecode analysis and fork
+   testing. To verify and help fix this, I need access to the source code. Can you
+   verify the contracts on the block explorer or provide source for security review?
+   ```
+
+### When bytecode analysis is insufficient
+
+If after Steps 3.5 and 4 you cannot make progress:
+
+1. **Contact the team** for source code (Step 10A channels)
+2. **Use online decompilers** (Dedaub, if available)
+3. **Document the blocker** in coverage.md and report
+4. **Consider pivoting** to a different target with verified contracts
+
+**Key principle:** Bytecode analysis allows pattern matching and hypothesis testing,
+but NEVER claim definitive findings without source code verification. State confidence
+levels honestly.
 
 ---
 

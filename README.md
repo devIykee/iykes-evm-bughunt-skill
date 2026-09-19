@@ -194,3 +194,31 @@ Contributions are welcome via **pull request** against `main`.
 ## License
 
 MIT — Copyright (c) 2026 Iyke / deviykee. See [LICENSE](LICENSE).
+
+## Step 3.5: Bytecode Analysis (NEW)
+
+When contracts are unverified (Step 3 finds no source), use the new bytecode analysis workflow:
+
+```bash
+# Automated bytecode analysis
+./tools/analyze-bytecode.sh 0x<contract> $RPC output-dir
+
+# Creates:
+# - bytecode.bin (raw bytecode)
+# - disasm.txt (full disassembly)
+# - functions.txt (decoded selectors)
+# - patterns.txt (CREATE2, CALL, SSTORE)
+# - ANALYSIS.md (summary report)
+```
+
+**What it finds:**
+- Function selectors and signatures
+- External call patterns (CALL/STATICCALL/DELEGATECALL)
+- Contract deployment (CREATE/CREATE2)
+- Storage modifications (SSTORE)
+
+**Combine with Foundry fork testing** to verify behavior without source code.
+
+See [SKILL.md Step 3.5](SKILL.md#step-35---bytecode-analysis-for-unverified-contracts) for full methodology.
+
+**Coverage honesty:** Bytecode analysis allows pattern matching but NOT definitive findings. Always state confidence levels and document the source code limitation.

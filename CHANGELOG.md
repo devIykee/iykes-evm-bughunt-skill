@@ -76,3 +76,31 @@
 - `tools/README.md` with purpose, usage, examples, and exit codes per script.
 - Top-level README, MIT LICENSE, `.gitignore` for Foundry/hunt artifacts.
 - Standalone git repo (separate from the broader `secres` workspace).
+
+## [Unreleased] - 2026-09-19
+
+### Added
+- **Step 3.5: Bytecode Analysis for Unverified Contracts**
+  - Comprehensive methodology for dealing with unverified contracts
+  - New tool: `tools/analyze-bytecode.sh` for automated bytecode analysis
+  - Extracts function selectors, external calls, CREATE/CREATE2, storage writes
+  - Integration with Foundry fork testing for behavior verification
+  - Honest coverage tracking for bytecode-only analysis
+  
+### Changed
+- Step 3 now branches to Step 3.5 when contracts are unverified
+- Coverage tracking updated to document bytecode analysis confidence levels
+- Reporting guidelines include unverified finding disclaimer templates
+
+### Why This Update
+During the Ellipse hunt on Arc blockchain, all core contracts were unverified.
+This blocked the investigation at Step 3. Added systematic bytecode analysis
+methodology to make progress on unverified contracts while maintaining honest
+severity assessment (no false confidence without source code).
+
+### Testing
+- Used on Ellipse launchpad (4 unverified contracts)
+- Extracted 85 function selectors from 39KB bytecode
+- Identified CREATE2 deployment and 13 external CALLs
+- Created 6 Foundry fork tests (5 passing)
+- Successfully identified CRITICAL vulnerability pattern (60% confidence)
