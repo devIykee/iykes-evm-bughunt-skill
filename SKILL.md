@@ -384,18 +384,63 @@ investigation.
 
 ### Tools to install/use (in order of preference)
 
+**Install these tools when you encounter unverified contracts:**
+
+```bash
+# GitHub CLI (for discovery and contact hunting)
+# Linux/WSL:
+sudo apt install gh
+# or macOS:
+brew install gh
+
+# Heimdall decompiler (Rust-based, generates pseudo-Solidity)
+cargo install heimdall-rs
+
+# Mythril (symbolic execution and vulnerability scanner)
+pip3 install mythril
+
+# Optional but useful
+pip3 install slither-analyzer
+npm install -g @ethereum-sourcify/cli
+```
+
+**Check if tools are already installed before installing:**
+```bash
+command -v gh >/dev/null 2>&1 || { echo "Installing gh..."; sudo apt install gh -y; }
+command -v heimdall >/dev/null 2>&1 || { echo "Installing heimdall..."; cargo install heimdall-rs; }
+command -v myth >/dev/null 2>&1 || { echo "Installing mythril..."; pip3 install mythril; }
+```
+
+**Bytecode analysis tool preference order:**
+
 1. **cast disassemble** (already available with Foundry)
    - Built-in, no installation needed
    - Basic disassembly and selector extraction
    
-2. **Foundry fork tests** (already available)
+2. **Heimdall decompiler** (install with cargo)
+   - Generates pseudo-Solidity from bytecode
+   - Identifies function signatures and control flow
+   - Usage: `heimdall decompile --rpc-url $RPC <contract_address>`
+   
+3. **Mythril** (install with pip3)
+   - Symbolic execution engine
+   - Finds common vulnerabilities
+   - Usage: `myth analyze -a <contract_address> --rpc $RPC`
+   
+4. **Foundry fork tests** (already available)
    - Test actual behavior on mainnet fork
    - Verify assumptions about contract logic
    
-3. **Online decompilers** (when available)
+5. **Online decompilers** (when available)
    - Dedaub (https://library.dedaub.com/decompile)
    - Panoramix/Ethervm (if accessible)
    - Request source from team via official channels
+
+**When to install which tool:**
+- **Unverified contracts** → Install Heimdall and Mythril immediately
+- **Need security scanning** → Install Slither and Mythril
+- **Discovery and contacts** → Install gh CLI
+- **Sourcify verification** → Install @ethereum-sourcify/cli
 
 ### Bytecode analysis script
 
@@ -456,12 +501,29 @@ echo "✓ Analysis complete! Results in $OUTPUT_DIR/"
 4. **Storage writes** - SSTORE opcodes (track state changes)
 5. **Critical patterns** - Known vulnerability signatures
 
-### Analysis workflow for unverified contracts
+### Bytecode analysis workflow for unverified contracts
 
+**Step 1: Install necessary tools (if not already installed)**
 ```bash
-# 1. Run bytecode analysis
+# Check and install decompilers
+command -v heimdall >/dev/null 2>&1 || cargo install heimdall-rs
+command -v myth >/dev/null 2>&1 || pip3 install mythril
+```
+
+**Step 2: Run bytecode analysis**
+```bash
+# 1. Run the bytecode analysis script
 ./tools/analyze-bytecode.sh "$CONTRACT" "$RPC" hunt-dir/bytecode-analysis
 
+# 2. Decompile with Heimdall (generates pseudo-Solidity)
+heimdall decompile --rpc-url "$RPC" "$CONTRACT" -o hunt-dir/heimdall-output
+
+# 3. Run Mythril security scan
+myth analyze -a "$CONTRACT" --rpc "$RPC" --max-depth 12 > hunt-dir/mythril-report.txt
+```
+
+**Step 3: Review function list**
+```bash
 # 2. Review function list
 cat hunt-dir/bytecode-analysis/functions.txt
 # Look for: admin functions, token creation, pool initialization, critical transfers
@@ -470,6 +532,17 @@ cat hunt-dir/bytecode-analysis/functions.txt
 cat hunt-dir/bytecode-analysis/patterns.txt
 # Look for: CREATE2 (token deployment), CALL instructions (external interactions)
 
+# 4. Review Heimdall pseudo-Solidity output
+cat hunt-dir/heimdall-output/*.sol
+# Look for: function logic, state variables, external calls
+
+# 5. Review Mythril findings
+cat hunt-dir/mythril-report.txt
+# Triage: genuine issues vs false positives
+```
+
+**Step 4: Search for specific patterns**
+```bash
 # 4. Search disassembly for specific patterns
 # Example: Uniswap v3 createPool selector 0xa1671295
 grep -i "a1671295" hunt-dir/bytecode-analysis/disasm.txt
@@ -477,7 +550,10 @@ grep -i "a1671295" hunt-dir/bytecode-analysis/disasm.txt
 # 5. Get context around critical operations
 # Example: context around CREATE2
 grep -B 30 -A 30 "CREATE2$" hunt-dir/bytecode-analysis/disasm.txt
+```
 
+**Step 5: Create Foundry fork tests to verify behavior**
+```bash
 # 6. Create Foundry fork tests to verify behavior
 # Test actual on-chain behavior instead of guessing from bytecode
 ```
@@ -558,10 +634,22 @@ When reporting vulnerabilities found via bytecode analysis:
 
 If after Steps 3.5 and 4 you cannot make progress:
 
-1. **Contact the team** for source code (Step 10A channels)
-2. **Use online decompilers** (Dedaub, if available)
-3. **Document the blocker** in coverage.md and report
-4. **Consider pivoting** to a different target with verified contracts
+1. **Install and use advanced decompilers:**
+   ```bash
+   # Try Heimdall if not already used
+   heimdall decompile --rpc-url "$RPC" "$CONTRACT" -o decompiled/
+   
+   # Try Mythril for vulnerability patterns
+   myth analyze -a "$CONTRACT" --rpc "$RPC"
+   ```
+
+2. **Contact the team** for source code (Step 10A channels)
+
+3. **Use online decompilers** (Dedaub, if available)
+
+4. **Document the blocker** in coverage.md and report
+
+5. **Consider pivoting** to a different target with verified contracts
 
 **Key principle:** Bytecode analysis allows pattern matching and hypothesis testing,
 but NEVER claim definitive findings without source code verification. State confidence
