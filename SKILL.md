@@ -22,6 +22,24 @@ By **deviykee**. Fill the INTAKE, then execute the steps top to bottom. Mechanic
 probes are scripts under `tools/`; decision gates tell you exactly what to do next.
 You should not have to invent the repeatable parts — run the tool, read the gate.
 
+### Core Principle: Proactive Problem-Solving
+
+**When you hit a blocker, find or build a solution. Do NOT stop at "tool not available" 
+or "data unavailable".**
+
+Examples of proactive problem-solving:
+- **Unverified contracts?** → Search for and install decompilers (Panoramix, Dedaub API), 
+  use bytecode analysis, create Foundry fork tests
+- **Missing tool?** → Install with pip/cargo/npm/apt, or find online alternatives
+- **Unsupported chain?** → Find RPC endpoints via chainlist.org, check docs, use explorers
+- **No API access?** → Scrape data, use alternative sources, query on-chain directly
+- **Rate limited?** → Use multiple providers, add delays, cache results
+- **Unknown function selectors?** → Use 4byte.directory, analyze bytecode patterns, test behavior
+
+**Document every workaround** so future hunts benefit. Add new tools to this skill's 
+`tools/` directory when they prove useful. The goal is continuous improvement of the 
+methodology.
+
 ### Pair with EVM audit skills
 
 After Step 3 has source (or a solid surface map), also load **`evm-audit-master`**
@@ -147,6 +165,13 @@ RPC="<RPC>"; CID="<CHAIN_ID>"; BS="<EXPLORER>/api/v2"
     a file without tracing its value-moving logic does not count as path coverage.
     If coverage is low, say so explicitly in the report and user status; never
     imply a complete audit was performed.
+11. **Overcome blockers proactively.** When you encounter a blocker (unverified 
+    contracts, missing tools, unsupported chains, unavailable data), actively search
+    for and install/use tools that solve the problem. Search the internet for 
+    decompilers, analyzers, APIs, or alternative data sources. Install packages 
+    with pip/cargo/npm when needed. Create scripts to automate repetitive tasks.
+    Do NOT stop at "source code unavailable" or "tool not installed" - find a way 
+    forward. Document the tools used and methods employed so future hunts benefit.
 
 ---
 

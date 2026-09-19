@@ -80,6 +80,15 @@
 ## [Unreleased] - 2026-09-19
 
 ### Added
+- **Core Principle: Proactive Problem-Solving** at the top of SKILL.md
+  - When you hit a blocker, actively find or build a solution
+  - Examples: install decompilers, find alternative APIs, scrape data, query on-chain
+  - Document every workaround for future hunts
+- **Operating Rule 11: Overcome blockers proactively**
+  - Search internet for tools that solve the problem
+  - Install packages with pip/cargo/npm when needed
+  - Create scripts to automate repetitive tasks
+  - Do NOT stop at "source code unavailable" or "tool not installed"
 - **Step 3.5: Bytecode Analysis for Unverified Contracts**
   - Comprehensive methodology for dealing with unverified contracts
   - New tool: `tools/analyze-bytecode.sh` for automated bytecode analysis
@@ -91,16 +100,22 @@
 - Step 3 now branches to Step 3.5 when contracts are unverified
 - Coverage tracking updated to document bytecode analysis confidence levels
 - Reporting guidelines include unverified finding disclaimer templates
+- Skill mindset: from "blocked by missing tools" to "find tools to unblock"
 
 ### Why This Update
 During the Ellipse hunt on Arc blockchain, all core contracts were unverified.
-This blocked the investigation at Step 3. Added systematic bytecode analysis
-methodology to make progress on unverified contracts while maintaining honest
-severity assessment (no false confidence without source code).
+This blocked the investigation at Step 3. Instead of stopping, we:
+1. Searched for decompilation tools
+2. Created bytecode analysis methodology when decompilers weren't available
+3. Built Foundry fork tests to verify behavior
+4. Successfully identified CRITICAL vulnerability pattern (60% confidence)
+
+This update codifies that proactive mindset as a core operating principle.
+Future hunts should never stop at "tool not available" - find or build the tool.
 
 ### Testing
 - Used on Ellipse launchpad (4 unverified contracts)
 - Extracted 85 function selectors from 39KB bytecode
 - Identified CREATE2 deployment and 13 external CALLs
 - Created 6 Foundry fork tests (5 passing)
-- Successfully identified CRITICAL vulnerability pattern (60% confidence)
+- Successfully identified CRITICAL vulnerability pattern despite no source code
