@@ -35,6 +35,8 @@ Examples of proactive problem-solving:
 - **No API access?** → Scrape data, use alternative sources, query on-chain directly
 - **Rate limited?** → Use multiple providers, add delays, cache results
 - **Unknown function selectors?** → Use 4byte.directory, analyze bytecode patterns, test behavior
+- **Need to find project resources?** → Use `gh search` (repos, code, issues, commits), 
+  web search for docs/announcements, explore GitHub org structure
 
 **Document every workaround** so future hunts benefit. Add new tools to this skill's 
 `tools/` directory when they prove useful. The goal is continuous improvement of the 
@@ -334,6 +336,23 @@ requests, and pull the `to` addresses from the `eth_call`s; those are the contra
 
 **D. Explorer**: search the chain's Blockscout for the token/contract names
 (`qUSD`, `VaultManager`, project name).
+
+**E. GitHub search**: use `gh search` to find official repos, contract deployments, 
+documentation, or security contacts:
+```bash
+# Search for repos by project name
+gh search repos "hood.fun" --language solidity
+
+# Search code for contract addresses or deployment scripts
+gh search code "0xCONTRACT_ADDR" --language solidity
+
+# Find security policies or contact info
+gh search code "SECURITY.md" user:projectname
+gh search code "security@" user:projectname
+
+# Search issues/discussions for bug reports or disclosures
+gh search issues "vulnerability security" repo:projectname/repo
+```
 
 ---
 
@@ -928,6 +947,20 @@ HackerOne beats a generic contact@):
    behind Cloudflare (`data-cfemail`).
 4. Official GitHub org **People** + matching verified X bios. Founders are
    backup DMs, not the first inbox.
+5. **GitHub search methods** - use `gh search` to find security contacts:
+   ```bash
+   # Search for SECURITY.md files
+   gh search code "filename:SECURITY.md" org:projectname
+   
+   # Search for security email addresses in code/docs
+   gh search code "security@" org:projectname --language markdown
+   
+   # Find bug bounty mentions
+   gh search code "bug bounty OR bounty program" org:projectname
+   
+   # Search commit messages for security contact updates
+   gh search commits "security contact" repo:projectname/repo
+   ```
 
 Then verify socials:
 
@@ -1019,6 +1052,13 @@ report + PoC repo. Still no public post until patched.
 - Vanity CA suffix (e.g. tokens ending in a fixed 2 bytes) = a launchpad fingerprint.
 - Playbook tools: see **Tools** table above and `tools/README.md`.
 - Optional: `slither . --filter-paths 'lib|test|script' --json slither-report.json`
+- **GitHub CLI search methods:**
+  - `gh search repos "<project>" --language solidity` - find official repos
+  - `gh search code "0xADDRESS" --language solidity` - locate deployment references
+  - `gh search code "filename:SECURITY.md" org:<org>` - find security policies
+  - `gh search code "security@ OR contact@" org:<org>` - discover contact emails
+  - `gh search issues "vulnerability OR security" repo:<org>/<repo>` - past reports
+  - `gh search commits "deploy OR deployment" repo:<org>/<repo>` - deployment history
 
 ## Appendix B - adversarial prompt pack (copy into subagent or self)
 
