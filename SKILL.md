@@ -1182,3 +1182,363 @@ PoC before Critical, **track coverage so thoroughness is real**. That discipline
 is the job.
 
 deviykee
+
+---
+
+## STEP 11 - Frontend Security Audit (always check)
+
+**Run this step for every bug hunt, regardless of product type.** Frontend vulnerabilities can be as critical as smart contract bugs, especially exposed API keys that control gas sponsorship or authentication.
+
+### 11A. Bundle Analysis - Extract Frontend Secrets
+
+Modern web apps bundle JavaScript into `/assets/*.js` or `/_next/static/chunks/*.js`. These files often contain hardcoded secrets that should never be client-side.
+
+**Create and run the frontend analysis script:**
+
+```bash
+# Save as tools/step11_frontend_security.sh
+cat > tools/step11_frontend_security.sh << 'SCRIPT'
+#!/bin/bash
+# Frontend Security Scanner
+WEBSITE=$1
+OUTPUT_DIR=${2:-"frontend-security"}
+
+mkdir -p "$OUTPUT_DIR"
+
+echo "=== Frontend Security Analysis for $WEBSITE ==="
+
+# 1. Fetch main page
+echo "[1] Fetching main page..."
+curl -s "$WEBSITE" -H "User-Agent: Mozilla/5.0" -o "$OUTPUT_DIR/index.html"
+
+# 2. Extract JavaScript files
+echo "[2] Extracting JavaScript files..."
+grep -oP 'src="[^"]*\.js[^"]*"' "$OUTPUT_DIR/index.html" | \
+  sed 's/src="//g' | sed 's/"//g' | sort -u > "$OUTPUT_DIR/js_files.txt"
+
+echo "Found $(wc -l < "$OUTPUT_DIR/js_files.txt") JavaScript files"
+
+# 3. Download largest bundle (usually the main app)
+MAIN_JS=$(head -1 "$OUTPUT_DIR/js_files.txt")
+if [[ $MAIN_JS == /* ]]; then
+    MAIN_JS="${WEBSITE}${MAIN_JS}"
+elif [[ $MAIN_JS != http* ]]; then
+    MAIN_JS="${WEBSITE}/${MAIN_JS}"
+fi
+
+echo "[3] Downloading main bundle: $MAIN_JS"
+curl -s "$MAIN_JS" -o "$OUTPUT_DIR/bundle.js"
+
+# 4. Search for exposed credentials
+echo ""
+echo "=== CRITICAL: API Keys & Tokens ==="
+grep -oiE '(api[_-]?key|apikey|secret[_-]?key|access[_-]?token)["\s:=]+[a-zA-Z0-9_-]{20,}' "$OUTPUT_DIR/bundle.js" | head -20
+
+echo ""
+echo "=== Bearer Tokens ==="
+grep -oiE '(bearer|authorization)[":\s]+(bearer\s+)?[a-zA-Z0-9_-]{20,}' "$OUTPUT_DIR/bundle.js" | head -10
+
+# 5. Extract contract addresses
+echo ""
+echo "=== Contract Addresses (non-zero) ==="
+grep -oiE '0x[a-fA-F0-9]{40}' "$OUTPUT_DIR/bundle.js" | \
+  grep -v "^0x0000000000000000000000000000000000000" | \
+  sort -u | head -20 > "$OUTPUT_DIR/contract_addresses.txt"
+echo "Found $(wc -l < "$OUTPUT_DIR/contract_addresses.txt") unique addresses"
+
+# 6. RPC endpoints with keys
+echo ""
+echo "=== RPC Endpoints (check for embedded keys) ==="
+grep -oiE 'https?://[^"'\'']+\.(infura|alchemy|quicknode|ankr)\.[^"'\'']+' "$OUTPUT_DIR/bundle.js" | \
+  sort -u
+
+# 7. API endpoints
+echo ""
+echo "=== API Endpoints ==="
+grep -oiE 'https?://[a-zA-Z0-9.-]+/(api|v1|v2|graphql)[^"'\'']*' "$OUTPUT_DIR/bundle.js" | \
+  sort -u | head -20
+
+# 8. WebSocket endpoints
+echo ""
+echo "=== WebSocket Endpoints ==="
+grep -oiE 'wss?://[^"'\'']+' "$OUTPUT_DIR/bundle.js" | sort -u
+
+# 9. Database connection strings
+echo ""
+echo "=== Database/Private Data Exposure ==="
+grep -iE '(mongodb|postgres|mysql|redis|connection.*string)' "$OUTPUT_DIR/bundle.js" | wc -l
+echo "Found potential database references"
+
+# 10. localStorage/sessionStorage (private data leakage)
+echo ""
+echo "=== Local Storage Keys ==="
+grep -oE 'localStorage\.(get|set)Item\([^)]+\)' "$OUTPUT_DIR/bundle.js" | \
+  sort -u | head -20
+
+# 11. Authentication patterns
+echo ""
+echo "=== Authentication Patterns ==="
+grep -oiE '(jwt|session|auth|token)[^,;]{0,50}' "$OUTPUT_DIR/bundle.js" | head -10
+
+echo ""
+echo "=== Analysis complete. Results in $OUTPUT_DIR/ ==="
+echo "Review bundle.js for hardcoded secrets and credentials."
+SCRIPT
+
+chmod +x tools/step11_frontend_security.sh
+```
+
+**Run the analysis:**
+```bash
+./tools/step11_frontend_security.sh "$WEBSITE" hunt-dir/frontend-security
+```
+
+### 11B. Critical Patterns to Check
+
+For each finding, assess severity and impact:
+
+**🔴 CRITICAL Findings:**
+1. **Gas sponsorship keys** (Pimlico, Gelato, etc.)
+   - Search: `pim_`, `pimlico`, `gelato`, `paymaster`, `sponsor`
+   - Impact: Direct financial drain (gas costs charged to project)
+   - Action: Rotate immediately, estimate potential loss
+
+2. **Bearer authentication tokens**
+   - Search: `Authorization.*Bearer`, hardcoded 32+ char hex strings
+   - Impact: Authentication bypass, impersonation
+   - Action: Rotate token, audit backend for unauthorized access
+
+3. **Database credentials**
+   - Search: `mongodb://`, `postgres://`, connection strings, API keys to database services
+   - Impact: Direct database access, data breach
+   - Action: Rotate all credentials, check for data exfiltration
+
+4. **Admin API keys**
+   - Search: `admin`, `secret`, `master`, service-specific patterns
+   - Impact: Privileged access, service abuse
+   - Action: Rotate and move to backend
+
+**🟠 HIGH Findings:**
+5. **RPC endpoint keys** (Alchemy, Infura, QuickNode)
+   - Pattern: `https://.*alchemy.com/v2/KEY` or `/v3/KEY`
+   - Impact: Rate limit exhaustion, monitoring, cost
+   - Mitigation: Check if origin whitelisting is enabled
+
+6. **Third-party API keys** (CoinGecko, TheGraph, etc.)
+   - Impact: Service abuse, rate limiting, unexpected bills
+   - Action: Move to backend proxy with rate limiting
+
+**🟡 MEDIUM Findings:**
+7. **Private user data in localStorage**
+   - Check: What's being stored unencrypted
+   - Impact: XSS attacks can steal sensitive data
+   - Action: Encrypt sensitive data, use httpOnly cookies
+
+8. **Internal API endpoints exposed**
+   - Pattern: `/internal/`, `/admin/`, `/debug/`
+   - Impact: Information disclosure, potential unauthorized access
+   - Action: Verify authentication requirements
+
+9. **WebSocket endpoints**
+   - Check: Oracle feeds, real-time data sources
+   - Impact: Front-running, competitive intelligence
+   - Action: Consider if direct client connection is necessary
+
+### 11C. Account Abstraction Services
+
+**Pimlico / Gelato / Biconomy (ERC-4337):**
+
+If you find keys for account abstraction services:
+
+```bash
+# Check what features are used
+grep -i "pimlico\|gelato\|biconomy" hunt-dir/frontend-security/bundle.js | \
+  grep -oE "(bundler|paymaster|sponsor|userOp)" | sort -u
+```
+
+**Critical questions:**
+1. Is gas sponsorship enabled? (check for `paymaster`, `sponsor`)
+2. What's the potential financial impact? (gas costs × expected usage)
+3. Are there spending limits configured?
+4. Can this be automated to drain the budget?
+
+**Financial impact calculation:**
+```
+Estimated Loss = (Operations per day × Gas cost per op × Days until detected)
+Example: 10,000 ops × $0.50 × 7 days = $35,000
+```
+
+### 11D. Testing Exposed Credentials
+
+**Only test with user approval and document results:**
+
+```bash
+# Test if RPC key works (check error message)
+curl -X POST "https://eth-mainnet.g.alchemy.com/v2/EXPOSED_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
+
+# Expected responses:
+# - "Unspecified origin not on whitelist" = Good (protected)
+# - Valid block number = Bad (key works from anywhere)
+# - "Invalid API key" = Already rotated
+```
+
+**Document test results in findings:**
+- ✅ Tested and protected by origin whitelist (still should be backend)
+- ⚠️ Tested and works without restrictions (CRITICAL)
+- ℹ️ Not tested (would require service account)
+
+### 11E. Reporting Frontend Vulnerabilities
+
+**Update severity assessment:**
+
+Frontend findings can be CRITICAL when they enable:
+1. Direct financial loss (gas sponsorship drain)
+2. Authentication bypass (bearer tokens)
+3. Database access (connection strings)
+4. Mass user data breach (admin keys)
+
+**Report structure for frontend findings:**
+
+```markdown
+# <PROJECT> - CRITICAL: Exposed <Service> API Key Enables Financial Drain
+
+**Researcher:** deviykee
+**Severity:** CRITICAL - $X,000-$Y,000 potential loss
+**Component:** Frontend bundle (`/assets/index-*.js`)
+**Status:** Publicly accessible, live exploitable
+
+## What this means in plain language
+
+The project's <Service> API key is hardcoded in publicly accessible JavaScript.
+Anyone can extract it and <specific impact>. This could cost the project 
+$X,000-$Y,000 if exploited.
+
+## Affected components
+- **Frontend bundle:** https://<website>/assets/index-<hash>.js
+- **Exposed credential:** `<KEY_PREFIX>...<KEY_SUFFIX>`
+- **Service:** <Service Name> (<what it controls>)
+
+## Root cause
+API keys are embedded in client-side JavaScript instead of being protected
+server-side. The key appears at line <N> in the bundle.
+
+## Attack scenario
+1. Attacker views page source or inspects network requests
+2. Extracts API key from JavaScript bundle (trivial, no tools needed)
+3. Uses key to <specific attack>
+4. Project incurs costs or service disruption
+
+## Impact
+- **Auth required:** None (public website)
+- **Financial impact:** $X-Y estimated (see calculation)
+- **Exploitation difficulty:** Trivial (view-source)
+- **Scope:** All users, entire service budget
+
+## Proof of concept
+```bash
+# Extract key
+curl -s https://<website>/assets/index-<hash>.js | grep -o "<pattern>"
+
+# [OPTIONAL: Test key with approval]
+# Result: <response showing it works or is protected>
+```
+
+## Fix
+1. **Immediate (< 1 hour):**
+   - Rotate the exposed key at <service dashboard URL>
+   - Check usage logs for unauthorized activity
+   - Set up spending alerts
+
+2. **Permanent (this week):**
+   - Move API calls to backend proxy
+   - Store keys in environment variables (server-side only)
+   - Implement per-user rate limiting
+   - Add request authentication
+
+3. **Architecture:**
+   ```
+   Before: Browser → Service API (exposed key)
+   After:  Browser → Your Backend → Service API (key in secrets)
+   ```
+
+## Additional findings
+[List other exposed credentials found in same bundle]
+
+## References
+- Frontend bundle: <URL>
+- Service pricing: <URL to understand costs>
+- Service documentation: <URL>
+```
+
+### 11F. Update Coverage Tracking
+
+Add frontend security to coverage.md:
+
+```markdown
+## Frontend Security Analysis
+
+| Component | Analyzed | Findings | Severity |
+|-----------|----------|----------|----------|
+| JavaScript bundles | yes | 5 exposed keys | CRITICAL |
+| API endpoints | yes | 2 internal paths | MEDIUM |
+| localStorage usage | yes | No PII stored | PASS |
+| WebSocket endpoints | yes | Oracle feeds exposed | LOW |
+
+**Frontend security grade:** F (critical issues found)
+```
+
+### 11G. Tools Table Update
+
+Add to the main Tools table:
+
+| Script | Step | Inputs | Outputs / gates | Why this exists |
+|---|---|---|---|---|
+| `tools/step11_frontend_security.sh` | 11 | `<WEBSITE> [OUTPUT_DIR]` | API keys, tokens, RPC endpoints, addresses | Catch hardcoded secrets in frontend |
+
+### 11H. When to Run Frontend Analysis
+
+**Always run Step 11 when:**
+- Target has a web frontend (most DeFi projects)
+- User asks to "check frontend" or "data leakage"
+- Looking for quick wins before deep contract analysis
+- Contract addresses are hard to find (frontend config)
+
+**Run before or in parallel with contract analysis:**
+- Step 2 (locate contracts) can use frontend findings
+- Frontend keys might indicate centralization risks
+- Exposed admin keys affect threat model
+
+### 11I. Frontend Findings Checklist
+
+Before finalizing the report:
+
+- [ ] All exposed credentials documented with severity
+- [ ] Financial impact calculated for gas sponsorship keys
+- [ ] Testing results documented (what works, what's protected)
+- [ ] Architecture recommendations provided
+- [ ] Immediate and long-term fixes specified
+- [ ] Cost-benefit analysis included
+- [ ] Other projects notified if using same vulnerability pattern
+
+---
+
+## Operating Rules Update (add to main list)
+
+**12. Frontend security is mandatory.** Every bug hunt must check the frontend for
+    exposed credentials, even if focusing on smart contracts. Hardcoded API keys,
+    bearer tokens, and gas sponsorship keys can be as critical as contract bugs.
+    Run Step 11 before or during contract analysis.
+
+**13. Financial impact for infrastructure keys.** When gas sponsorship keys
+    (Pimlico, Gelato, Biconomy) or authenticated service keys are exposed, calculate
+    the financial impact: `max_operations × cost_per_op × time_until_detected`.
+    State this in the severity justification.
+
+**14. Test frontend exposures responsibly.** Only test exposed keys with user
+    approval. Document whether keys are protected by origin whitelisting. Testing
+    should be read-only verification, never exhausting rate limits or budgets.
+
+---
+
