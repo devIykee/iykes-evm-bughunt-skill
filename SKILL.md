@@ -9,7 +9,9 @@ description: >-
   fork / eth_call ONLY. Never exploit mainnet. Be token-conservative; use smaller
   models for capable subtasks. After surface map, run foundation maps, multi-angle
   adversarial passes, dual-ledger / complex-logic hunts, and honest severity
-  (including kill temporary-vs-persistent conditions). Maintain coverage.md
+  (including kill temporary-vs-persistent conditions). Keep a Low, Medium, or
+  High when it is a lead or attack-path step toward a Critical; do not inflate
+  its severity. Maintain coverage.md
   incrementally (files opened, paths traced, %, exclusions); never imply a
   complete audit when coverage is low.
   Use when the user names a target (project, handle, or website) and wants it
@@ -81,7 +83,7 @@ for judgment-heavy steps only.
 | File search, log tails, compiling forge, running tests | Novel attack design and exploit sequencing |
 | Drafting report/DM from a filled template | Final report accuracy and bound honesty |
 | Parallel explore lanes with narrow prompts | Disclosure strategy if ambiguous |
-| Slither / static JSON triage of Low noise | Complex multi-tx economic logic |
+| Slither / static JSON triage of Low noise (keep chain leads, rule 15) | Complex multi-tx economic logic |
 
 Rules:
 1. **Do not re-read entire skills** every turn. Load this playbook once per hunt;
@@ -174,6 +176,19 @@ RPC="<RPC>"; CID="<CHAIN_ID>"; BS="<EXPLORER>/api/v2"
     with pip/cargo/npm when needed. Create scripts to automate repetitive tasks.
     Do NOT stop at "source code unavailable" or "tool not installed" - find a way 
     forward. Document the tools used and methods employed so future hunts benefit.
+15. **Chain leads to a Critical.** Hunt and keep a Low, Medium, or High when it
+    can be a step on an attack path to a Critical. A usable step is a missing
+    check, a weak invariant, griefing, a rounding leak, an oracle gap, a trust
+    assumption, or a partial auth bypass that combines with another bug, a
+    reachable state, or a second call into unauthenticated theft, a freeze, or
+    unbounded loss. Record the lead at its honest severity (rule 2). Name the
+    missing piece that would make the chain Critical, and try that chain before
+    you close the path. If the chain is confirmed with a fork PoC, report the
+    chain severity, not the piece alone. If the second piece is missing, keep a
+    lead line that names what is missing. Drop the lead only when the chain is
+    impossible: the state is unreachable, the auth cannot be bypassed, or the
+    condition restores and leaves victims whole. Do not upgrade the piece by
+    itself.
 
 ---
 
@@ -749,6 +764,9 @@ only one adapter). Do not dump the whole codebase into one prompt.
 
 For each angle, record: **path attempted → blocked by X** or **confirmed with PoC**.
 Killed paths are as valuable as open ones (they prevent false Criticals).
+If the block leaves a Low, Medium, or High that can still be a step toward a
+Critical, keep it as a chain lead and apply operating rule 15 before you drop
+the path.
 
 ---
 
@@ -783,6 +801,9 @@ adapters, agent allocators), hunt the **three notions of value** separately:
 ## STEP 6 - Read with attack questions (by PRODUCT_TYPE)
 
 Ask a fixed list. Hunt **one wrong assumption at the one moment value moves.**
+Also write down a Low, Medium, or High that is not a Critical by itself when it
+can be combined into one (operating rule 15). Do not drop it only because the
+single bug is below Critical.
 
 Universal: who moves the money (every path?); what happens when funds cross
 contracts (migration/liquidation/distribution); can a stranger trigger it; can
@@ -917,6 +938,12 @@ PoC quality bar:
 
 Write the number you can defend, with the bound stated. Do not round up.
 
+**Chain lead (operating rule 15).** Before you close a path as not Critical,
+apply that rule: write the honest severity of the piece, name the second bug,
+role, state, or call that would make it Critical, and trace that piece if it
+exists. A chain confirmed with a fork PoC is reported at the chain severity.
+A missing piece stays as a lead line. Killed chains go in hunt notes.
+
 **Second-opinion gate (before disclosure):**
 1. Gas-feasible?
 2. Access control actually blocks it?
@@ -934,8 +961,10 @@ Open every report with a plain-language "What this means" section so a non-techn
 reader understands the danger before any code. Do not use em dashes (the long dash
 character); use commas, periods, or a normal hyphen instead.
 
-Keep a **master findings table** for the hunt (ID, severity, status, component)
-and update it when findings are killed or reclassified. Single-issue disclosure
+Keep a **master findings table** for the hunt (ID, severity, status, component,
+chain-to-critical) and update it when findings are killed, reclassified, or
+kept as a chain lead. `chain-to-critical` is the missing or confirmed next
+step, or `n/a` when the finding cannot chain. Single-issue disclosure
 files still use the template below.
 
 **Coverage honesty in the report:** cite `coverage.md` summary (`Coverage: X/Y
@@ -1165,17 +1194,23 @@ Use after Step 5 foundation map. One chunk + one angle per invocation.
 11. Timestamp manipulation advantage?
 12. External protocol pause/fail/unexpected data?
 13. Weird ERC20 (FoT, rebase, no bool return)?
+14. Which Low, Medium, or High is not a Critical alone, but is a step on a path
+    to one? Name the missing piece (operating rule 15).
 
 ## Appendix C - hunt session hygiene
 
 - Keep private: INTAKE fills, addresses, draft reports/DMs, live PoCs until patched.
 - Master findings table stays updated when severity changes.
-- Killed Critical candidates listed in hunt notes (prevents re-opening bad claims).
+- Killed Critical candidates and killed chain leads listed in hunt notes
+  (prevents re-opening bad claims).
+- Open Low, Medium, and High chain leads stay on the master findings table at
+  their real severity (operating rule 15).
 - Prefer local exact-logic unit tests for accounting bugs; use fork for live magnitude.
 - **coverage.md** updated incrementally; low Z% stated openly; exclusions listed with reasons.
 - **reports/contacts.md** before any DM: official inbox, source URL, exact quote.
 
-**Reminder:** fork only, honest severity, ask don't threaten, kill your own bad
+**Reminder:** fork only, honest severity, keep Low / Medium / High chain leads
+to a Critical (operating rule 15), ask don't threaten, kill your own bad
 findings, private until patched, stay token-conservative and route mechanical
 work to smaller models. Map first, multi-angle second, dual-ledger on vaults,
 PoC before Critical, **track coverage so thoroughness is real**. That discipline
@@ -1539,6 +1574,10 @@ Before finalizing the report:
 **14. Test frontend exposures responsibly.** Only test exposed keys with user
     approval. Document whether keys are protected by origin whitelisting. Testing
     should be read-only verification, never exhausting rate limits or budgets.
+
+**See also operating rule 15** (chain leads to a Critical) in the main list.
+A frontend Low, Medium, or High stays in scope when it is a step toward a
+Critical. Do not upgrade it on its own.
 
 ---
 

@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.2.3] - 2026-10-10
+
+### Added
+
+- **Operating rule 15, chain leads to a Critical.** Hunt and keep a Low, Medium,
+  or High when it is a usable step toward unauthenticated theft, a freeze, or
+  unbounded loss. Record it at its honest severity, name the missing piece, and
+  try the chain before closing the path. A fork-proven chain is reported at the
+  chain severity. A missing piece stays as a lead on the findings table
+  (`chain-to-critical`). Drop the lead only when the chain is impossible. Do not
+  upgrade the piece by itself.
+- Pointers in Steps 5.5, 6, and 8, the Step 9 findings table, Appendix B prompt
+  14, and Appendix C. Description frontmatter mentions the same rule.
+
 ## [v0.2.2] - 2026-08-15
 
 ### Added
