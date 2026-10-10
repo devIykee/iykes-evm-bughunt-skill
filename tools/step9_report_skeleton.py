@@ -12,7 +12,7 @@
 #
 # Args (required):
 #   --project     PROJECT_NAME from INTAKE
-#   --severity    Critical|High|Medium|Trust (already decided in Step 8)
+#   --severity    Critical|High|Medium|Low|Trust (already decided in Step 8)
 #   --title       One-line title after severity
 #   --chain       CHAIN from INTAKE
 #   --chain-id    CHAIN_ID from INTAKE
@@ -56,7 +56,7 @@ Examples:
 """,
     )
     p.add_argument("--project", required=True, help="PROJECT_NAME from INTAKE")
-    p.add_argument("--severity", required=True, help="Critical|High|Medium|Trust (already decided)")
+    p.add_argument("--severity", required=True, help="Critical|High|Medium|Low|Trust (already decided)")
     p.add_argument("--title", required=True, help="One-line title after severity")
     p.add_argument("--chain", required=True, help="CHAIN from INTAKE")
     p.add_argument("--chain-id", required=True, dest="chain_id", help="CHAIN_ID from INTAKE")

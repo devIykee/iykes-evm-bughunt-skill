@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.2.4] - 2026-10-10
+
+### Changed
+
+- **Operating rule 15.** A confirmed Low, Medium, or High is reported at that
+  severity, whether or not it chains to a Critical. Write the Step 9 report and
+  include it in the private disclosure. Do not leave it only in hunt notes, and
+  do not wait for a Critical. Killed findings stay out of the report.
+
 ## [v0.2.3] - 2026-10-10
 
 ### Added

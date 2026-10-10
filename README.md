@@ -156,7 +156,7 @@ Non-negotiable rules (full text in `SKILL.md`):
 
 1. **Fork / `eth_call` verification only. Never move real funds on mainnet.**
 2. **Honest severity.** State the bound. A Medium is a Medium.
-3. **Chain leads.** Keep a Low, Medium, or High when it can be a step toward a Critical. Full rule: operating rule 15 in `SKILL.md`.
+3. **Chain leads and reports.** Keep a Low, Medium, or High when it can be a step toward a Critical, and report every confirmed one. Full rule: operating rule 15 in `SKILL.md`.
 4. **Ask, never threaten.** No "pay or I release/exploit".
 5. **Kill your own finding if it does not hold up.**
 6. **Never publish a live, unpatched bug.** Private channel + private repo until fixed.

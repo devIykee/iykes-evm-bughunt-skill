@@ -10,8 +10,8 @@ description: >-
   models for capable subtasks. After surface map, run foundation maps, multi-angle
   adversarial passes, dual-ledger / complex-logic hunts, and honest severity
   (including kill temporary-vs-persistent conditions). Keep a Low, Medium, or
-  High when it is a lead or attack-path step toward a Critical; do not inflate
-  its severity. Maintain coverage.md
+  High when it is a lead or attack-path step toward a Critical, and report every
+  confirmed Low, Medium, or High at its real severity. Maintain coverage.md
   incrementally (files opened, paths traced, %, exclusions); never imply a
   complete audit when coverage is low.
   Use when the user names a target (project, handle, or website) and wants it
@@ -83,7 +83,7 @@ for judgment-heavy steps only.
 | File search, log tails, compiling forge, running tests | Novel attack design and exploit sequencing |
 | Drafting report/DM from a filled template | Final report accuracy and bound honesty |
 | Parallel explore lanes with narrow prompts | Disclosure strategy if ambiguous |
-| Slither / static JSON triage of Low noise (keep chain leads, rule 15) | Complex multi-tx economic logic |
+| Slither / static JSON triage (report a confirmed Low, rule 15) | Complex multi-tx economic logic |
 
 Rules:
 1. **Do not re-read entire skills** every turn. Load this playbook once per hunt;
@@ -188,7 +188,11 @@ RPC="<RPC>"; CID="<CHAIN_ID>"; BS="<EXPLORER>/api/v2"
     lead line that names what is missing. Drop the lead only when the chain is
     impossible: the state is unreachable, the auth cannot be bypassed, or the
     condition restores and leaves victims whole. Do not upgrade the piece by
-    itself.
+    itself. Report every confirmed Low, Medium, and High, whether or not it
+    chains. Write the Step 9 report and include it in the private disclosure at
+    that severity. Do not leave it only in hunt notes, and do not wait for a
+    Critical before you report it. Killed findings and false positives stay out
+    of the report.
 
 ---
 
@@ -803,7 +807,8 @@ adapters, agent allocators), hunt the **three notions of value** separately:
 Ask a fixed list. Hunt **one wrong assumption at the one moment value moves.**
 Also write down a Low, Medium, or High that is not a Critical by itself when it
 can be combined into one (operating rule 15). Do not drop it only because the
-single bug is below Critical.
+single bug is below Critical. A confirmed Low, Medium, or High is reported at
+that severity.
 
 Universal: who moves the money (every path?); what happens when funds cross
 contracts (migration/liquidation/distribution); can a stranger trigger it; can
@@ -942,7 +947,8 @@ Write the number you can defend, with the bound stated. Do not round up.
 apply that rule: write the honest severity of the piece, name the second bug,
 role, state, or call that would make it Critical, and trace that piece if it
 exists. A chain confirmed with a fork PoC is reported at the chain severity.
-A missing piece stays as a lead line. Killed chains go in hunt notes.
+A missing piece stays as a lead line. Killed chains go in hunt notes. A
+confirmed Low, Medium, or High is still reported at that severity.
 
 **Second-opinion gate (before disclosure):**
 1. Gas-feasible?
@@ -964,7 +970,10 @@ character); use commas, periods, or a normal hyphen instead.
 Keep a **master findings table** for the hunt (ID, severity, status, component,
 chain-to-critical) and update it when findings are killed, reclassified, or
 kept as a chain lead. `chain-to-critical` is the missing or confirmed next
-step, or `n/a` when the finding cannot chain. Single-issue disclosure
+step, or `n/a` when the finding cannot chain. Report every confirmed Low,
+Medium, and High (operating rule 15), including ones that do not chain. Use
+this template at the finding's real severity. One file per finding, or one
+section each in a multi-finding pack. Single-issue disclosure
 files still use the template below.
 
 **Coverage honesty in the report:** cite `coverage.md` summary (`Coverage: X/Y
@@ -976,7 +985,7 @@ Scaffold the file from INTAKE + your Step 8 call (judgment fields you still fill
 ```bash
 python3 ./tools/step9_report_skeleton.py \
   --project "<PROJECT_NAME>" \
-  --severity "<High/Med/Crit>" \
+  --severity "<Low/Medium/High/Critical>" \
   --title "<one-line title>" \
   --chain "<CHAIN>" \
   --chain-id "$CID" \
@@ -992,7 +1001,7 @@ impact, PoC result, and fix before disclosing.
 ```markdown
 # <PROJECT> - <SEVERITY>: <one-line title>
 **Researcher:** deviykee
-**Severity:** <High/Med/Crit> - <why; state the bound>
+**Severity:** <Low/Medium/High/Critical> - <why; state the bound>
 **Status:** Verified on a local fork / read-only on-chain. No mainnet state touched.
 **Disclosure:** Private. Live-exploitable now.  <!-- if applicable -->
 
@@ -1042,7 +1051,10 @@ For multi-finding private packs, also ship:
 
 ## STEP 10 - Disclose and get paid
 
-Run this **after** the report file exists. Write the first DM as a separate file
+Run this **after** the report file exists. Disclose a confirmed Low, Medium, or
+High the same way as a Critical (operating rule 15). The DM severity matches
+the report. Do not hold a finding back because it is not Critical. Write the
+first DM as a separate file
 (e.g. `reports/dm-<project>.md`). Do not put full exploit steps in the first DM.
 
 ### 10A. Official contacts (mandatory every hunt)
@@ -1210,9 +1222,10 @@ Use after Step 5 foundation map. One chunk + one angle per invocation.
 - **reports/contacts.md** before any DM: official inbox, source URL, exact quote.
 
 **Reminder:** fork only, honest severity, keep Low / Medium / High chain leads
-to a Critical (operating rule 15), ask don't threaten, kill your own bad
-findings, private until patched, stay token-conservative and route mechanical
-work to smaller models. Map first, multi-angle second, dual-ledger on vaults,
+and report every confirmed Low, Medium, and High (operating rule 15), ask
+don't threaten, kill your own bad findings, private until patched, stay
+token-conservative and route mechanical work to smaller models. Map first,
+multi-angle second, dual-ledger on vaults,
 PoC before Critical, **track coverage so thoroughness is real**. That discipline
 is the job.
 
@@ -1577,7 +1590,8 @@ Before finalizing the report:
 
 **See also operating rule 15** (chain leads to a Critical) in the main list.
 A frontend Low, Medium, or High stays in scope when it is a step toward a
-Critical. Do not upgrade it on its own.
+Critical, and a confirmed one is reported at that severity. Do not upgrade it
+on its own.
 
 ---
 
