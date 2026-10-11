@@ -96,7 +96,7 @@ Examples:
 
     body = f"""Hey {clean(greet)}.
 
-I'm Iyke, a security researcher. (http://x.com/deviykee)
+I'm Iyke, a security researcher. (https://github.com/devIykee/security-research)
 
 I've found and verified a {clean(args.severity)} vulnerability in {clean(args.project)}'s {clean(args.component)} on {clean(args.chain)} that {clean(args.impact)}. It's live-exploitable right now on {clean(args.scope)}, so it's time-sensitive.
 

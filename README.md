@@ -4,7 +4,7 @@ End-to-end playbook for hunting bugs in **EVM smart contracts and DeFi protocols
 
 Fill the INTAKE block in [`SKILL.md`](SKILL.md), run Steps 1–10 in order, and use the scripts in [`tools/`](tools/) for every mechanical probe (RPC checks, contract discovery, surface map, auth triage, PoC scaffold, report/DM skeletons). Judgment calls — severity, root cause, exploit design, disclosure strategy — stay manual.
 
-**Researcher identity for reports and DMs:** [deviykee](https://x.com/deviykee) / **Iyke**.
+**Researcher identity for reports and DMs:** [deviykee](https://github.com/devIykee/security-research) / **Iyke**.
 
 | | |
 |---|---|
@@ -161,7 +161,7 @@ Non-negotiable rules (full text in `SKILL.md`):
 5. **Kill your own finding if it does not hold up.**
 6. **Never publish a live, unpatched bug.** Private channel + private repo until fixed.
 
-Sign reports as **deviykee**. First DM voice: **Iyke** (https://x.com/deviykee).
+Sign reports as **deviykee**. First DM voice: **Iyke** (https://github.com/devIykee/security-research).
 
 ---
 

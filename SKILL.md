@@ -1129,7 +1129,7 @@ the user what you searched and what is missing.
 
 ### First DM template (fill after the report; save separately)
 
-Researcher voice: **Iyke** (http://x.com/deviykee). Also sign reports as **deviykee** / Iyke.
+Researcher voice: **Iyke** (https://github.com/devIykee/security-research). Also sign reports as **deviykee** / Iyke.
 No em dashes. Short first message. No full attack runbook. No threats. No "pay or I publish."
 Ask who owns the contracts so you get the right inbox. Save as `reports/dm-<project>.md`.
 
@@ -1148,7 +1148,7 @@ Filled shape:
 ```text
 Hey <PROJECT_NAME or short product name>.
 
-I'm Iyke, a security researcher. (http://x.com/deviykee)
+I'm Iyke, a security researcher. (https://github.com/devIykee/security-research)
 
 I've found and verified a <SEVERITY> vulnerability in <PROJECT_NAME>'s <one-line component / flow, e.g. graduation flow> on <CHAIN> that <one plain sentence: what an attacker can do to user funds>. It's live-exploitable right now on <scope, e.g. every un-graduated token>, so it's time-sensitive.
 
